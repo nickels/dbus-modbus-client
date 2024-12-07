@@ -125,17 +125,6 @@ class EM540_Meter(device.CustomName, device.EnergyMeter):
             Reg_text(0x5000, 7, '/Serial'),
         ]
 
-        # make sure application is set to H
-        appreg = Reg_u16(0xa000)
-        if self.read_register(appreg) != 7:
-            self.write_register(appreg, 7)
-
-            # read back the value in case the setting is not accepted
-            # for some reason
-            if self.read_register(appreg) != 7:
-                self.log.error('%s: failed to set application to H', self)
-                return
-
         self.read_info()
 
         phases = nr_phases_em540[int(self.info['/PhaseConfig'])]
