@@ -17,13 +17,8 @@ from pathlib import Path
 # Check if the symlink exists
 symlink_path = '/opt/victronenergy/dbus-modbus-client/dbus-modbus-client.py'
 
-# If the symlink exists, resolve its target folder
-if os.path.islink(symlink_path):
-    sys.path.insert(1, '/opt/victronenergy/dbus-modbus-client/ext/velib_python')
-else:
-    # If no symlink exists, use the default path
-    sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
 
+sys.path.insert(1, '/opt/victronenergy/dbus-modbus-client/ext/velib_python')
 from settingsdevice import SettingsDevice
 from vedbus import VeDbusService
 
