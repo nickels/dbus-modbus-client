@@ -12,13 +12,8 @@ import sys
 import time
 import traceback
 from gi.repository import GLib
-from pathlib import Path
 
-# Check if the symlink exists
-symlink_path = '/opt/victronenergy/dbus-modbus-client/dbus-modbus-client.py'
-
-
-sys.path.insert(1, '/opt/victronenergy/dbus-modbus-client/ext/velib_python')
+sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
 from settingsdevice import SettingsDevice
 from vedbus import VeDbusService
 
