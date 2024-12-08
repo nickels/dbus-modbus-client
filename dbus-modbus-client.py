@@ -12,8 +12,23 @@ import sys
 import time
 import traceback
 from gi.repository import GLib
+from pathlib import Path
 
-sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
+# Check if the symlink exists
+symlink_path = '/opt/victronenergy/dbus-modbus-client/dbus-modbus-client.py'
+
+# If the symlink exists, resolve its target folder
+if os.path.islink(symlink_path):
+    # Resolve the symlink to get the target folder
+    resolved_path = Path(os.readlink(symlink_path)).resolve()
+    target_dir = resolved_path.parent  # Get the parent directory of the symlink target
+
+    # Add the 'ext/velib_python' subdirectory to sys.path
+    sys.path.insert(1, target_dir / 'ext' / 'velib_python')
+else:
+    # If no symlink exists, use the default path
+    sys.path.insert(1, os.path.join(os.path.dirname(__file__), 'ext', 'velib_python'))
+
 from settingsdevice import SettingsDevice
 from vedbus import VeDbusService
 
