@@ -131,3 +131,89 @@ follows.
 | Read Register Lo          | 0C  |                               |
 | Read Register Hi          | 00  | Status: success               |
 | Read Register Lo          | 00  |                               |
+
+## Steps to Implement Custom Modbus Client Registration
+
+### 1. Create a Script to Register the Custom Client
+
+Save the following script as `/data/scripts/register_custom_modbus_client.sh`. This script will:
+
+- Clone or update a Git repository containing your custom client.
+- Symlink the custom client to the appropriate location (`/opt/victronenergy/dbus-modbus-client/`).
+
+```bash
+#!/bin/bash
+
+# Set working directory
+WORK_DIR="/data/dbus-modbus-client"
+CUSTOM_SCRIPT_URL="<<<YOUR GIT REPO HERE>>>"
+CUSTOM_CLIENT_NAME="carlo_gavazzi.py"
+
+# Ensure git is installed (you might need to install git if not present)
+if ! command -v git &> /dev/null; then
+    echo "git not found, installing..."
+    opkg update && opkg install git
+fi
+
+# Check if the repository already exists
+if [ ! -d "$WORK_DIR" ]; then
+    echo "Cloning the repository..."
+    git clone "$CUSTOM_SCRIPT_URL" "$WORK_DIR"
+else
+    echo "Repository already exists. Pulling latest changes..."
+    cd "$WORK_DIR" && git pull
+fi
+
+# Check if the custom client exists in the repo, if not, exit with error
+if [ ! -f "$WORK_DIR/$CUSTOM_CLIENT_NAME" ]; then
+    echo "Error: Custom client script '$CUSTOM_CLIENT_NAME' not found in repository."
+    exit 1
+fi
+
+# Register custom client
+echo "Registering the custom client..."
+ln -sf "$WORK_DIR/$CUSTOM_CLIENT_NAME" "/opt/victronenergy/dbus-modbus-client/"
+
+# Re-register dbus-modbus-client.py
+echo "Registering dbus-modbus-client.py..."
+ln -sf "$WORK_DIR/dbus-modbus-client.py" "/opt/victronenergy/dbus-modbus-client/dbus-modbus-client.py"
+
+echo "Custom client registration complete."
+```
+
+### 2. Make the Script Executable
+
+After creating the script, ensure it is executable by running:
+
+```bash
+chmod +x /data/scripts/register_custom_modbus_client.sh
+```
+
+### 3. Create a Boot Hook (`/data/rc.local`)
+
+VenusOS does not persist `/etc/rc.local` across updates, but `/data/rc.local` is persistent. To ensure the custom client is registered on every boot, create the following file:
+
+```bash
+nano /data/rc.local
+```
+
+Add this content to the file:
+
+```bash
+#!/bin/sh
+/data/scripts/register_custom_modbus_client.sh
+exit 0
+```
+
+### 4. Make `/data/rc.local` Executable
+
+Finally, ensure that `/data/rc.local` is executable by running:
+
+```bash
+chmod +x /data/rc.local
+```
+
+### Important Note: Syncing with the Original Repo
+
+If you are using a forked version of the `dbus-modbus-client`, it’s important to keep it in sync with the original repository. This will ensure that you benefit from any updates, bug fixes, and improvements made to the core `dbus-modbus-client` code. You can periodically pull changes from the original repo into your fork to stay up to date.
+
