@@ -14,9 +14,9 @@ class Reg_ver(Reg, int):
         v = values[0]
         return self.update((v >> 12, v >> 8 & 0xf, v & 0xff))
 
-nr_phases = [ 3, 3, 2, 1, 3 ]
+nr_phases_em24 = [ 3, 3, 2, 1, 3 ]
 
-phase_configs = [
+phase_configs_em24 = [
     '3P.n',
     '3P.1',
     '2P',
@@ -59,7 +59,7 @@ class EM24_Meter(device.CustomName, device.EnergyMeter):
         self.info_regs = [
             Reg_ver( 0x0302, '/HardwareVersion'),
             Reg_ver( 0x0304, '/FirmwareVersion'),
-            Reg_u16( 0x1002, '/PhaseConfig', text=phase_configs, write=(0, 4)),
+            Reg_u16( 0x1002, '/PhaseConfig', text=phase_configs_em24, write=(0, 4)),
             Reg_text(0x5000, 7, '/Serial'),
         ]
 
@@ -76,7 +76,7 @@ class EM24_Meter(device.CustomName, device.EnergyMeter):
 
         self.read_info()
 
-        phases = nr_phases[int(self.info['/PhaseConfig'])]
+        phases = nr_phases_em24[int(self.info['/PhaseConfig'])]
 
         regs = [
             Reg_s32l(0x0028, '/Ac/Power',          10, '%.1f W'),
@@ -106,7 +106,7 @@ class EM540_Meter(device.CustomName, device.EnergyMeter):
     vendor_name = 'Carlo Gavazzi'
     productid = 0xb017
     productname = 'Carlo Gavazzi EM540 Ethernet Energy Meter'
-    min_timeout = 0.5
+    min_timeout = 0.4
 
     def phase_regs(self, n):
         s = 2 * (n - 1)
@@ -120,7 +120,6 @@ class EM540_Meter(device.CustomName, device.EnergyMeter):
     def device_init(self):
         self.info_regs = [
             Reg_ver( 0x0302, '/HardwareVersion'),
-            Reg_ver( 0x0304, '/FirmwareVersion'),
             Reg_u16( 0x1002, '/PhaseConfig', text=phase_configs_em540, write=(0, 4)),
             Reg_text(0x5000, 7, '/Serial'),
         ]
@@ -183,6 +182,12 @@ models = {
     },
 }
 
-probe.add_handler(probe.ModelRegister(Reg_u16(0x000b), models,
-                                      methods=['tcp'],
-                                      units=[1]))
+# Register handler for all possible Modbus slave addresses (1 to 247)
+for address in range(1, 248):
+    probe.add_handler(probe.ModelRegister(
+        Reg_u16(0x000b),
+        models,
+        methods=['tcp'],
+        units=[address]  # Single unit (Modbus slave address)
+    ))
+
